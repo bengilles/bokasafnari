@@ -1,19 +1,6 @@
 # bokasafnari 📖
 
-**bokasafnari** (Icelandic for *Librarian*) is a Python desktop application and command-line utility designed to fetch articles from the web, extract their core reading content (stripping away ads, trackers, sidebars, and styling), download and embed all inline images for offline availability, and package them into standard, highly compatible EPUB books for e-readers (Kindle, Kobo, Apple Books, etc.).
-
----
-
-## Features
-
-- 🖥️ **Modern Desktop GUI:** Built with HTML, CSS, and JS rendered inside a native OS window via `pywebview`.
-- 🔗 **Proxy Scraping:** Bypasses browser CORS limitations by routing fetch actions through the Python backend.
-- 🗂️ **Chapter Reordering:** Drag-and-drop card UI to rearrange scraped chapters before packaging.
-- 🖼️ **Offline Image Embedding:** Automatically fetches inline images, bundles them directly inside the EPUB, and maps paths locally. Failed images are cleanly stripped.
-- 📱 **Reader-Mode Preview:** Interactive live preview of the clean text, with adjustable reading sizes.
-- 📁 **Native Integration:** Prompts native operating system "Save File" dialogs for file downloads.
-- 🐚 **Headless CLI:** Compile ebooks directly from your terminal using commands.
-- 📦 **PyInstaller Bundler:** Package the script and frontend into a single standalone executable.
+**bokasafnari** is a Python desktop application and command-line utility designed to fetch articles from the web, extract their core reading content (stripping away ads, trackers, sidebars, and styling), download and embed all inline images for offline availability, and package them into standard, highly compatible EPUB books for e-readers (Kindle, Kobo, Apple Books, etc.).
 
 ---
 
