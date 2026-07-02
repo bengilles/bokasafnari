@@ -1,4 +1,4 @@
-# bokasafnari 📖
+# bokasafnari 
 
 **bokasafnari** is a Python desktop application and command-line utility designed to fetch articles from the web, extract their core reading content (stripping away ads, trackers, sidebars, and styling), download and embed all inline images for offline availability, and package them into standard, highly compatible EPUB books for e-readers (Kindle, Kobo, Apple Books, etc.).
 
