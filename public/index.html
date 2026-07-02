@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bokasafnari - Web to EPUB</title>
+    <!-- Modern web fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Panel (Control Center) -->
+        <aside class="sidebar">
+            <header class="app-header">
+                <div class="logo">
+                    <span class="logo-icon">📖</span>
+                    <h1>bokasafnari</h1>
+                </div>
+                <p class="tagline">Turn web articles into clean EPUB ebooks</p>
+            </header>
+
+            <!-- Book Metadata Form -->
+            <section class="section metadata-section">
+                <h2>Book Metadata</h2>
+                <div class="input-group">
+                    <label for="book-title">Ebook Title</label>
+                    <input type="text" id="book-title" placeholder="My Compiled Web Book" value="My Web Collection">
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="book-author">Author</label>
+                        <input type="text" id="book-author" placeholder="Author Name" value="Scraped Reader">
+                    </div>
+                    <div class="input-group">
+                        <label for="book-publisher">Publisher</label>
+                        <input type="text" id="book-publisher" placeholder="Publisher" value="bokasafnari">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chapter Manager -->
+            <section class="section chapter-section">
+                <div class="section-header">
+                    <h2>Chapter List</h2>
+                    <span class="chapter-count" id="chapter-count">0 chapters</span>
+                </div>
+
+                <!-- Add URL Row -->
+                <div class="url-input-container">
+                    <input type="url" id="url-input" placeholder="Paste article URL here (e.g. https://...)" required>
+                    <button id="add-url-btn" class="btn btn-primary" type="button">
+                        <span class="btn-text">Add</span>
+                        <span class="spinner hidden"></span>
+                    </button>
+                </div>
+
+                <!-- Reorderable List of Chapters -->
+                <div class="chapter-list-wrapper">
+                    <ul class="chapter-list" id="chapter-list">
+                        <!-- Chapter items injected by JavaScript -->
+                    </ul>
+                    <!-- Empty state illustration -->
+                    <div class="chapter-empty-state" id="chapter-empty">
+                        <div class="empty-icon">🔗</div>
+                        <p>No chapters loaded yet.</p>
+                        <p class="subtext">Paste a URL above to scrape your first chapter.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer Actions -->
+            <footer class="sidebar-footer">
+                <button id="compile-btn" class="btn btn-accent btn-large" disabled>
+                    <span class="btn-text">Compile & Save EPUB</span>
+                    <span class="spinner hidden"></span>
+                </button>
+            </footer>
+        </aside>
+
+        <!-- Main Content Panel (Live Reader Preview) -->
+        <main class="main-preview">
+            <header class="preview-header">
+                <div class="preview-meta">
+                    <span class="preview-label">Live Preview</span>
+                    <h2 class="preview-title" id="preview-title">No Chapter Selected</h2>
+                    <span class="preview-source" id="preview-source"></span>
+                </div>
+                <div class="preview-controls">
+                    <button class="control-btn" id="font-decrease" title="Decrease font size">A-</button>
+                    <button class="control-btn" id="font-increase" title="Increase font size">A+</button>
+                </div>
+            </header>
+
+            <div class="preview-body-wrapper">
+                <!-- Reader Content Area -->
+                <article class="reader-view hidden" id="reader-view">
+                    <div class="reader-content" id="reader-content">
+                        <!-- Scraped HTML content goes here -->
+                    </div>
+                </article>
+
+                <!-- Welcome/Empty Preview Screen -->
+                <div class="preview-empty-state" id="preview-empty">
+                    <div class="book-mockup">
+                        <div class="book-cover">
+                            <span class="cover-title" id="cover-title-preview">My Web Collection</span>
+                            <span class="cover-author" id="cover-author-preview">Scraped Reader</span>
+                            <span class="cover-brand">bokasafnari</span>
+                        </div>
+                    </div>
+                    <h3>Your Digital Library</h3>
+                    <p>Select a chapter from the list to preview its extracted text layout.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Status toast notification overlay -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
