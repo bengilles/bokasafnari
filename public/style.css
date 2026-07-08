@@ -459,6 +459,25 @@ input[type="text"]:focus, input[type="url"]:focus {
     border-color: rgba(255, 255, 255, 0.2);
 }
 
+.edit-hint {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 4px 10px;
+    letter-spacing: 0.3px;
+    user-select: none;
+    opacity: 0.6;
+    transition: opacity var(--transition-fast);
+}
+
+.edit-hint:hover {
+    opacity: 1;
+    color: rgba(239, 68, 68, 0.7);
+    border-color: rgba(239, 68, 68, 0.25);
+}
+
 /* Preview Body and Reading Layout */
 .preview-body-wrapper {
     flex-grow: 1;
@@ -632,6 +651,108 @@ input[type="text"]:focus, input[type="url"]:focus {
 .reader-view.size-sm { font-size: 14px; }
 .reader-view.size-md { font-size: 16px; }
 .reader-view.size-lg { font-size: 19px; }
+
+/* ─── Editable Preview Blocks ─────────────────────────────────────────────── */
+/* Each top-level content block gets wrapped in .editable-block.               */
+/* Hovering reveals a red ✕ button to remove the element from the chapter.     */
+
+.editable-block {
+    position: relative;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.editable-block:hover {
+    background-color: rgba(239, 68, 68, 0.04);
+    box-shadow: inset 2px 0 0 rgba(239, 68, 68, 0.45);
+}
+
+.delete-block-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    background-color: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.22);
+    border-radius: var(--radius-sm);
+    color: rgba(239, 68, 68, 0.7);
+    font-size: 10px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-fast), background var(--transition-fast),
+                border-color var(--transition-fast), color var(--transition-fast);
+    z-index: 5;
+    user-select: none;
+}
+
+.editable-block:hover .delete-block-btn {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.delete-block-btn:hover {
+    background-color: rgba(239, 68, 68, 0.25);
+    border-color: rgba(239, 68, 68, 0.65);
+    color: #fca5a5;
+}
+
+.editable-block.deleting {
+    opacity: 0;
+    transform: translateX(-8px) scale(0.99);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+    pointer-events: none;
+}
+
+/* ─── Nested div blocks (inner level) ────────────────────────────────────── */
+/* Inner .editable-block wrappers (div children of a top-level block) use an  */
+/* accent-purple scheme so they're visually distinct from the outer red level. */
+
+.editable-block .editable-block:hover {
+    background-color: rgba(99, 102, 241, 0.05);
+    box-shadow: inset 2px 0 0 rgba(99, 102, 241, 0.45);
+}
+
+/* Suppress the outer block's own highlight when hovering an inner block */
+.editable-block:has(.editable-block:hover):not(.editable-block .editable-block) {
+    background-color: transparent;
+    box-shadow: none;
+}
+
+.editable-block .editable-block .delete-block-btn {
+    width: 19px;
+    height: 19px;
+    top: 4px;
+    right: 4px;
+    font-size: 9px;
+    background-color: rgba(99, 102, 241, 0.08);
+    border-color: rgba(99, 102, 241, 0.22);
+    color: rgba(99, 102, 241, 0.7);
+}
+
+.editable-block .editable-block:hover .delete-block-btn {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Hide outer delete btn while hovering inner block to avoid two buttons showing */
+.editable-block:has(.editable-block:hover) > .delete-block-btn {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.editable-block .editable-block .delete-block-btn:hover {
+    background-color: rgba(99, 102, 241, 0.25);
+    border-color: rgba(99, 102, 241, 0.65);
+    color: #a5b4fc;
+}
 
 /* Helpers */
 .hidden { display: none !important; }

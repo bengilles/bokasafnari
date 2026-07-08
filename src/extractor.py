@@ -1,6 +1,8 @@
+from bottle import response
 import requests
 from readability import Document
 from bs4 import BeautifulSoup
+from bs4 import UnicodeDammit
 from urllib.parse import urljoin
 
 # Browser-like headers to minimize scraper block rates
@@ -33,7 +35,7 @@ def extract_content(url):
         summary_html = doc.summary()
     except Exception as e:
         raise RuntimeError(f"Failed to parse content with readability engine: {str(e)}")
-
+    
     # Parse readability output with BeautifulSoup to sanitize tags and absolute-link assets
     soup = BeautifulSoup(summary_html, 'lxml')
 
@@ -55,6 +57,7 @@ def extract_content(url):
         for attr in list(img.attrs):
             if attr not in ['src', 'alt', 'title', 'id', 'class', 'width', 'height']:
                 del img[attr]
+
 
     # Attempt to extract author metadata from the original document
     author = ""
@@ -79,10 +82,14 @@ def extract_content(url):
     else:
         body_content = str(soup)
 
+    raw_bytes = body_content.encode('latin-1')
+    clean_text = raw_bytes.decode('cp1252')
+    final_output = clean_text.encode(response.encoding)
+
     return {
         'url': url,
         'title': title or "Untitled Chapter",
         'author': author,
         'site_name': site_name,
-        'content': body_content
+        'content': clean_text
     }
