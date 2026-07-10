@@ -83,6 +83,9 @@
                     <span class="btn-text">Compile & Save EPUB</span>
                     <span class="spinner hidden"></span>
                 </button>
+                <button id="reset-btn" class="btn btn-reset" title="Clear all chapters and reset the app">
+                    <span class="btn-text">⟳ Reset</span>
+                </button>
             </footer>
         </aside>
 
@@ -96,11 +99,30 @@
                 </div>
                 <div class="preview-controls">
                     <span class="edit-hint" id="edit-hint"
-                        title="Hover over any content block to reveal a delete button">✕ hover to delete blocks</span>
+                        title="Hover over any block: ✎ to edit text, ✕ to delete">✎ edit &nbsp; ✕ delete</span>
+                    <button class="control-btn" id="find-replace-btn" title="Find &amp; Replace (Ctrl+H)">⌕/⇄</button>
                     <button class="control-btn" id="font-decrease" title="Decrease font size">A-</button>
                     <button class="control-btn" id="font-increase" title="Increase font size">A+</button>
                 </div>
             </header>
+
+            <!-- Find / Replace Toolbar -->
+            <div class="find-replace-bar hidden" id="find-replace-bar">
+                <div class="fr-row">
+                    <span class="fr-label">FIND</span>
+                    <input class="fr-input" id="fr-find" type="text" placeholder="search text…" autocomplete="off" spellcheck="false">
+                    <span class="fr-match-count" id="fr-match-count"></span>
+                    <button class="fr-btn" id="fr-prev" title="Previous match">▲</button>
+                    <button class="fr-btn" id="fr-next" title="Next match">▼</button>
+                </div>
+                <div class="fr-row">
+                    <span class="fr-label">REPL</span>
+                    <input class="fr-input" id="fr-replace" type="text" placeholder="replace with…" autocomplete="off" spellcheck="false">
+                    <button class="fr-btn fr-btn-action" id="fr-replace-one" title="Replace current match">REPLACE</button>
+                    <button class="fr-btn fr-btn-action" id="fr-replace-all" title="Replace all matches">ALL</button>
+                    <button class="fr-btn fr-btn-close" id="fr-close" title="Close (Esc)">✕</button>
+                </div>
+            </div>
 
             <div class="preview-body-wrapper">
                 <!-- Reader Content Area -->

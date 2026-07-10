@@ -15,6 +15,7 @@ const chapterList = document.getElementById('chapter-list');
 const chapterEmptyState = document.getElementById('chapter-empty');
 const chapterCountBadge = document.getElementById('chapter-count');
 const compileBtn = document.getElementById('compile-btn');
+const resetBtn = document.getElementById('reset-btn');
 const readerView = document.getElementById('reader-view');
 const readerContent = document.getElementById('reader-content');
 const previewEmptyState = document.getElementById('preview-empty');
@@ -318,11 +319,19 @@ function initEditablePreview(chapterIndex) {
     });
 }
 
-// Creates a hover-reveal delete wrapper around a single element
+// Creates a hover-reveal edit + delete wrapper around a single element
 function wrapAsEditable(el, chapterIndex) {
     const wrapper = document.createElement('div');
     wrapper.className = 'editable-block';
 
+    // ── Edit button ────────────────────────────────────────────────
+    const editBtn = document.createElement('button');
+    editBtn.className = 'edit-block-btn';
+    editBtn.setAttribute('title', 'Edit this block');
+    editBtn.setAttribute('aria-label', 'Edit element');
+    editBtn.textContent = '✎';
+
+    // ── Delete button ──────────────────────────────────────────────
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'delete-block-btn';
     deleteBtn.setAttribute('title', 'Delete this element from chapter');
@@ -331,8 +340,54 @@ function wrapAsEditable(el, chapterIndex) {
 
     el.parentNode.insertBefore(wrapper, el);
     wrapper.appendChild(el);
+    wrapper.appendChild(editBtn);
     wrapper.appendChild(deleteBtn);
 
+    // ── Edit mode toggle ───────────────────────────────────────────
+    function enterEditMode() {
+        el.contentEditable = 'true';
+        el.classList.add('editing');
+        wrapper.classList.add('is-editing');
+        editBtn.textContent = '✔';
+        editBtn.setAttribute('title', 'Done editing');
+        el.focus();
+        // Move cursor to end
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(el);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+
+    function exitEditMode() {
+        el.contentEditable = 'false';
+        el.classList.remove('editing');
+        wrapper.classList.remove('is-editing');
+        editBtn.textContent = '✎';
+        editBtn.setAttribute('title', 'Edit this block');
+        serializeChapterContent(chapterIndex);
+    }
+
+    editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (wrapper.classList.contains('is-editing')) {
+            exitEditMode();
+        } else {
+            enterEditMode();
+        }
+    });
+
+    el.addEventListener('blur', (e) => {
+        // Small delay so clicking editBtn doesn't double-fire
+        setTimeout(() => {
+            if (wrapper.classList.contains('is-editing')) {
+                exitEditMode();
+            }
+        }, 120);
+    });
+
+    // ── Delete button ──────────────────────────────────────────────
     deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         wrapper.classList.add('deleting');
@@ -349,8 +404,8 @@ function wrapAsEditable(el, chapterIndex) {
 function serializeChapterContent(chapterIndex) {
     const clone = readerContent.cloneNode(true);
 
-    // Strip all injected delete buttons from the clone
-    clone.querySelectorAll('.delete-block-btn').forEach(btn => btn.remove());
+    // Strip all injected UI buttons from the clone (edit + delete)
+    clone.querySelectorAll('.edit-block-btn, .delete-block-btn').forEach(btn => btn.remove());
 
     // Unwrap .editable-block divs from deepest to shallowest
     const wrappers = Array.from(clone.querySelectorAll('.editable-block')).reverse();
@@ -430,3 +485,265 @@ compileBtn.addEventListener('click', async () => {
         setLoadingState(compileBtn, false);
     }
 });
+
+// ═══════════════════════════════════════════════════════════════
+// FIND / REPLACE
+// ═══════════════════════════════════════════════════════════════
+
+const findReplaceBar  = document.getElementById('find-replace-bar');
+const findReplaceBtn  = document.getElementById('find-replace-btn');
+const frFindInput     = document.getElementById('fr-find');
+const frReplaceInput  = document.getElementById('fr-replace');
+const frMatchCount    = document.getElementById('fr-match-count');
+const frPrevBtn       = document.getElementById('fr-prev');
+const frNextBtn       = document.getElementById('fr-next');
+const frReplaceOneBtn = document.getElementById('fr-replace-one');
+const frReplaceAllBtn = document.getElementById('fr-replace-all');
+const frCloseBtn      = document.getElementById('fr-close');
+
+let frMatches     = [];   // Array of <mark> nodes currently highlighted
+let frCurrentIdx  = -1;   // Which match is focused
+
+// ── Open / close ───────────────────────────────────────────────
+function openFindReplace() {
+    findReplaceBar.classList.remove('hidden');
+    frFindInput.focus();
+    frFindInput.select();
+    runFind();
+}
+
+function closeFindReplace() {
+    findReplaceBar.classList.add('hidden');
+    clearHighlights();
+    frMatchCount.textContent = '';
+    frMatches = [];
+    frCurrentIdx = -1;
+}
+
+findReplaceBtn.addEventListener('click', () => {
+    if (findReplaceBar.classList.contains('hidden')) {
+        openFindReplace();
+    } else {
+        closeFindReplace();
+    }
+});
+
+// Ctrl+H anywhere to open, Escape to close
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 'h') {
+        e.preventDefault();
+        openFindReplace();
+    }
+    if (e.key === 'Escape' && !findReplaceBar.classList.contains('hidden')) {
+        closeFindReplace();
+    }
+});
+
+// ── Find input — live highlighting as you type ─────────────────
+frFindInput.addEventListener('input', runFind);
+
+frFindInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        if (e.shiftKey) stepMatch(-1); else stepMatch(1);
+    }
+});
+
+// ── Navigation buttons ─────────────────────────────────────────
+frPrevBtn.addEventListener('click', () => stepMatch(-1));
+frNextBtn.addEventListener('click', () => stepMatch(1));
+
+// ── Replace buttons ────────────────────────────────────────────
+frReplaceOneBtn.addEventListener('click', replaceCurrent);
+frReplaceAllBtn.addEventListener('click', replaceAll);
+frCloseBtn.addEventListener('click', closeFindReplace);
+
+// ── Core: scan readerContent and wrap matches in <mark> ────────
+function runFind() {
+    clearHighlights();
+    frMatches = [];
+    frCurrentIdx = -1;
+
+    const needle = frFindInput.value;
+    if (!needle || state.selectedChapterIndex === null) {
+        updateMatchUI();
+        return;
+    }
+
+    // Walk every text node inside readerContent, skip UI button nodes
+    const walker = document.createTreeWalker(
+        readerContent,
+        NodeFilter.SHOW_TEXT,
+        {
+            acceptNode(node) {
+                // Skip text inside the injected UI buttons
+                if (node.parentElement.closest('.edit-block-btn, .delete-block-btn')) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        }
+    );
+
+    const escapedNeedle = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escapedNeedle, 'gi');
+    const textNodes = [];
+
+    let node;
+    while ((node = walker.nextNode())) {
+        textNodes.push(node);
+    }
+
+    // Process in reverse so replacements don't invalidate later node references
+    for (let i = textNodes.length - 1; i >= 0; i--) {
+        const tn = textNodes[i];
+        const text = tn.nodeValue;
+        let match;
+        const localMatches = [];
+
+        regex.lastIndex = 0;
+        while ((match = regex.exec(text)) !== null) {
+            localMatches.push({ index: match.index, length: match[0].length });
+        }
+
+        if (localMatches.length === 0) continue;
+
+        // Split text node into plain text + <mark> fragments
+        const frag = document.createDocumentFragment();
+        let cursor = 0;
+        for (const m of localMatches) {
+            if (m.index > cursor) {
+                frag.appendChild(document.createTextNode(text.slice(cursor, m.index)));
+            }
+            const mark = document.createElement('mark');
+            mark.className = 'fr-highlight';
+            mark.textContent = text.slice(m.index, m.index + m.length);
+            frag.appendChild(mark);
+            frMatches.unshift(mark); // collecting in reverse = final array is forward order
+        }
+        if (cursor < text.length || localMatches.length) {
+            const last = localMatches[localMatches.length - 1];
+            if (last.index + last.length < text.length) {
+                frag.appendChild(document.createTextNode(text.slice(last.index + last.length)));
+            }
+        }
+        tn.parentNode.replaceChild(frag, tn);
+    }
+
+    // frMatches was built in reverse per node, re-sort by DOM order
+    frMatches = Array.from(readerContent.querySelectorAll('mark.fr-highlight'));
+
+    if (frMatches.length > 0) {
+        frCurrentIdx = 0;
+        highlightCurrent();
+    }
+    updateMatchUI();
+}
+
+function stepMatch(dir) {
+    if (frMatches.length === 0) return;
+    frMatches[frCurrentIdx]?.classList.remove('fr-current');
+    frCurrentIdx = (frCurrentIdx + dir + frMatches.length) % frMatches.length;
+    highlightCurrent();
+    updateMatchUI();
+}
+
+function highlightCurrent() {
+    if (frCurrentIdx < 0 || frCurrentIdx >= frMatches.length) return;
+    const current = frMatches[frCurrentIdx];
+    current.classList.add('fr-current');
+    current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function updateMatchUI() {
+    const n = frMatches.length;
+    const needle = frFindInput.value;
+    if (!needle) {
+        frMatchCount.textContent = '';
+    } else if (n === 0) {
+        frMatchCount.textContent = 'no match';
+    } else {
+        frMatchCount.textContent = `${frCurrentIdx + 1}/${n}`;
+    }
+    const hasMatches = n > 0;
+    frPrevBtn.disabled       = !hasMatches;
+    frNextBtn.disabled       = !hasMatches;
+    frReplaceOneBtn.disabled = !hasMatches;
+    frReplaceAllBtn.disabled = !hasMatches;
+}
+
+// ── Strip <mark> wrappers from the live DOM ────────────────────
+function clearHighlights() {
+    readerContent.querySelectorAll('mark.fr-highlight').forEach(mark => {
+        const parent = mark.parentNode;
+        parent.replaceChild(document.createTextNode(mark.textContent), mark);
+        parent.normalize(); // merge adjacent text nodes
+    });
+}
+
+// ── Replace helpers ────────────────────────────────────────────
+function replaceCurrent() {
+    if (frMatches.length === 0 || frCurrentIdx < 0) return;
+    const mark = frMatches[frCurrentIdx];
+    const replacement = frReplaceInput.value;
+    mark.parentNode.replaceChild(document.createTextNode(replacement), mark);
+    frMatches.splice(frCurrentIdx, 1);
+    if (frCurrentIdx >= frMatches.length) frCurrentIdx = frMatches.length - 1;
+    // Save & re-highlight remaining
+    serializeChapterContent(state.selectedChapterIndex);
+    runFind();
+}
+
+function replaceAll() {
+    if (frMatches.length === 0) return;
+    const replacement = frReplaceInput.value;
+    frMatches.forEach(mark => {
+        mark.parentNode.replaceChild(document.createTextNode(replacement), mark);
+    });
+    frMatches = [];
+    frCurrentIdx = -1;
+    serializeChapterContent(state.selectedChapterIndex);
+    runFind();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RESET APP
+// ═══════════════════════════════════════════════════════════════
+
+resetBtn.addEventListener('click', () => {
+    if (state.chapters.length > 0) {
+        if (!confirm('Reset the app? This will clear all chapters and the preview.')) return;
+    }
+    resetApp();
+});
+
+function resetApp() {
+    // Reset state
+    state.chapters = [];
+    state.selectedChapterIndex = null;
+    state.fontSize = 'md';
+
+    // Reset metadata fields to defaults
+    bookTitleInput.value = 'My Web Collection';
+    bookAuthorInput.value = 'Scraped Reader';
+    bookPublisherInput.value = 'bokasafnari';
+    coverTitlePreview.innerText = 'My Web Collection';
+    coverAuthorPreview.innerText = 'Scraped Reader';
+
+    // Reset URL input
+    urlInput.value = '';
+
+    // Close find/replace bar if open
+    if (!findReplaceBar.classList.contains('hidden')) {
+        closeFindReplace();
+    }
+
+    // Reset font size on reader view
+    readerView.classList.remove('size-sm', 'size-md', 'size-lg');
+
+    // Clear preview & chapter list
+    renderChapterList();
+    clearPreview();
+
+    showToast('App reset to launch state.');
+}
