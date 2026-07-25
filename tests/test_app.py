@@ -7,12 +7,13 @@ from src.generator import generate_epub
 
 class TestBokasafnari(unittest.TestCase):
     
-    @patch('requests.get')
-    def test_extractor_success(self, mock_get):
+    @patch('cloudscraper.create_scraper')
+    def test_extractor_success(self, mock_create_scraper):
         """
         Verify that HTML content is cleanly scraped, layout clutter
         (scripts, style blocks) is stripped, and relative assets are absolute-resolved.
         """
+        mock_scraper = MagicMock()
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.encoding = 'utf-8'
@@ -36,7 +37,8 @@ class TestBokasafnari(unittest.TestCase):
             </body>
         </html>
         """
-        mock_get.return_value = mock_response
+        mock_scraper.get.return_value = mock_response
+        mock_create_scraper.return_value = mock_scraper
         
         # Scrape mock HTML
         result = extract_content('https://example.com/article')
@@ -94,6 +96,57 @@ class TestBokasafnari(unittest.TestCase):
                 os.remove(output_file)
             if os.path.exists('tests') and not os.listdir('tests'):
                 os.rmdir('tests')
+
+    def test_api_session_save_and_open(self):
+        """
+        Verify that Api.save_session writes session JSON data to file
+        and Api.open_session correctly parses and returns valid session state.
+        """
+        from app import Api
+        api = Api()
+        mock_window = MagicMock()
+        api.set_window(mock_window)
+
+        os.makedirs('tests', exist_ok=True)
+        session_file = 'tests/test_session.bokasafnari'
+
+        # Set up mock file dialog returns
+        mock_window.create_file_dialog.side_effect = [
+            [session_file],  # save dialog return
+            [session_file]   # open dialog return
+        ]
+
+        session_data = {
+            'version': 1,
+            'metadata': {
+                'title': 'Test Saved Session',
+                'author': 'Test Author',
+                'publisher': 'Test Pub'
+            },
+            'chapters': [
+                {'title': 'Ch 1', 'content': '<p>Scraped content 1</p>'},
+                {'title': 'Ch 2', 'content': '<p>Scraped content 2</p>'}
+            ],
+            'selectedChapterIndex': 1,
+            'fontSize': 'lg'
+        }
+
+        try:
+            # 1. Test save_session
+            save_result = api.save_session(session_data)
+            self.assertTrue(save_result['success'])
+            self.assertEqual(save_result['filename'], 'test_session.bokasafnari')
+            self.assertTrue(os.path.exists(session_file))
+
+            # 2. Test open_session
+            open_result = api.open_session()
+            self.assertTrue(open_result['success'])
+            self.assertEqual(open_result['data']['metadata']['title'], 'Test Saved Session')
+            self.assertEqual(len(open_result['data']['chapters']), 2)
+            self.assertEqual(open_result['data']['selectedChapterIndex'], 1)
+        finally:
+            if os.path.exists(session_file):
+                os.remove(session_file)
 
 if __name__ == '__main__':
     unittest.main()
