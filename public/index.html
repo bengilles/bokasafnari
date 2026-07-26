@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="terminal">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>bokasafnari - Web to EPUB</title>
-    <!-- Modern web fonts -->
+    <!-- Web fonts: Inter (dark/light), Share Tech Mono + VT323 (terminal) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Share+Tech+Mono&family=VT323&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -20,7 +20,7 @@
         <aside class="sidebar">
             <header class="app-header">
                 <div class="logo">
-                    <span class="logo-icon">$</span>
+                    <span class="logo-icon">#</span>
                     <h1>bokasafnari</h1>
                 </div>
                 <p class="tagline">Turn web articles into clean EPUB ebooks</p>
@@ -80,7 +80,7 @@
             <!-- Footer Actions -->
             <footer class="sidebar-footer">
                 <button id="compile-btn" class="btn btn-accent btn-large" disabled>
-                    <span class="btn-text">Compile & Save EPUB</span>
+                    <span class="btn-text">Compile &amp; Save EPUB</span>
                     <span class="spinner hidden"></span>
                 </button>
                 <div class="session-btn-row">
@@ -90,6 +90,13 @@
                     <button id="load-session-btn" class="btn btn-primary" title="Open local session file (Ctrl+O)">
                         <span class="btn-text">[O] Open Session</span>
                     </button>
+                </div>
+                <!-- Theme Switcher -->
+                <div class="theme-switcher" id="theme-switcher">
+                    <button class="theme-btn active" id="theme-terminal" data-theme="terminal"
+                        title="Old-school CRT terminal theme">▮ TERM</button>
+                    <button class="theme-btn" id="theme-dark" data-theme="dark" title="Dark mode">◑ DARK</button>
+                    <button class="theme-btn" id="theme-light" data-theme="light" title="Light mode">◌ LIGHT</button>
                 </div>
                 <button id="reset-btn" class="btn btn-reset" title="Clear all chapters and reset the app">
                     <span class="btn-text">⟳ Reset</span>
@@ -106,8 +113,8 @@
                     <span class="preview-source" id="preview-source"></span>
                 </div>
                 <div class="preview-controls">
-                    <span class="edit-hint" id="edit-hint"
-                        title="Hover over any block: ✎ to edit text, ✕ to delete">✎ edit &nbsp; ✕ delete</span>
+                    <span class="edit-hint" id="edit-hint" title="Hover over any block: ✎ to edit text, ✕ to delete">✎
+                        edit &nbsp; ✕ delete</span>
                     <button class="control-btn" id="undo-btn" title="Undo recent edit (Ctrl+Z)" disabled>↶ Undo</button>
                     <button class="control-btn" id="find-replace-btn" title="Find &amp; Replace (Ctrl+H)">⌕/⇄</button>
                     <button class="control-btn" id="font-decrease" title="Decrease font size">A-</button>
@@ -119,15 +126,18 @@
             <div class="find-replace-bar hidden" id="find-replace-bar">
                 <div class="fr-row">
                     <span class="fr-label">FIND</span>
-                    <input class="fr-input" id="fr-find" type="text" placeholder="search text…" autocomplete="off" spellcheck="false">
+                    <input class="fr-input" id="fr-find" type="text" placeholder="search text…" autocomplete="off"
+                        spellcheck="false">
                     <span class="fr-match-count" id="fr-match-count"></span>
                     <button class="fr-btn" id="fr-prev" title="Previous match">▲</button>
                     <button class="fr-btn" id="fr-next" title="Next match">▼</button>
                 </div>
                 <div class="fr-row">
                     <span class="fr-label">REPL</span>
-                    <input class="fr-input" id="fr-replace" type="text" placeholder="replace with…" autocomplete="off" spellcheck="false">
-                    <button class="fr-btn fr-btn-action" id="fr-replace-one" title="Replace current match">REPLACE</button>
+                    <input class="fr-input" id="fr-replace" type="text" placeholder="replace with…" autocomplete="off"
+                        spellcheck="false">
+                    <button class="fr-btn fr-btn-action" id="fr-replace-one"
+                        title="Replace current match">REPLACE</button>
                     <button class="fr-btn fr-btn-action" id="fr-replace-all" title="Replace all matches">ALL</button>
                     <button class="fr-btn fr-btn-close" id="fr-close" title="Close (Esc)">✕</button>
                 </div>
