@@ -35,6 +35,22 @@ const coverAuthorPreview = document.getElementById('cover-author-preview');
 const saveSessionBtn = document.getElementById('save-session-btn');
 const loadSessionBtn = document.getElementById('load-session-btn');
 
+// Theme switcher selectors
+const themeBtns = document.querySelectorAll('.theme-btn');
+
+// ─── Theme System ───────────────────────────────────────────────
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    themeBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === theme);
+    });
+    localStorage.setItem('bks-theme', theme);
+}
+
+themeBtns.forEach(btn => {
+    btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+});
+
 // Update mockup cover titles on input change
 bookTitleInput.addEventListener('input', (e) => {
     coverTitlePreview.innerText = e.target.value || 'Untitled Ebook';
@@ -70,8 +86,10 @@ window.addEventListener('pywebviewready', () => {
     showToast('Core desktop bridge ready.');
 });
 
-// Auto-restore session from localStorage on startup
+// Auto-restore session and theme from localStorage on startup
 window.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('bks-theme') || 'terminal';
+    applyTheme(savedTheme);
     loadAutoSession();
 });
 
