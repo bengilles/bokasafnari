@@ -1,0 +1,14 @@
+/build
+/build/bokasafnari
+build/bokasafnari/Analysis-00.toc
+build/bokasafnari/base_library.zip
+build/bokasafnari/bokasafnari.exe
+build/bokasafnari/bokasafnari.pkg
+build/bokasafnari/COLLECT-00.toc
+build/bokasafnari/EXE-00.toc
+build/bokasafnari/localpycs/pyimod01_archive.pyc
+build/bokasafnari/localpycs/pyimod02_importers.pyc
+build/bokasafnari/localpycs/pyimod03_ctypes.pyc
+build/bokasafnari/localpycs/pyimod04_pywin32.pyc
+build/bokasafnari/localpycs/struct.pyc
+

@@ -445,7 +445,7 @@ function wrapAsEditable(el, chapterIndex) {
 // Serialize the current visible DOM state back into state.chapters[chapterIndex].content.
 // Uses a clone so the live DOM is never mutated. Unwraps .editable-block divs
 // deepest-first so nested wrappers are handled correctly at any depth.
-function serializeChapterContent(chapterIndex) {
+function serializeChapterContent(chapterIndex, saveAuto = true) {
     const clone = readerContent.cloneNode(true);
 
     // Strip all injected UI buttons from the clone (edit + delete)
@@ -469,7 +469,9 @@ function serializeChapterContent(chapterIndex) {
     });
 
     state.chapters[chapterIndex].content = content;
-    saveAutoSession();
+    if (saveAuto) {
+        saveAutoSession();
+    }
 }
 
 // Font styling controls
@@ -538,19 +540,19 @@ compileBtn.addEventListener('click', async () => {
 // FIND / REPLACE
 // ═══════════════════════════════════════════════════════════════
 
-const findReplaceBar  = document.getElementById('find-replace-bar');
-const findReplaceBtn  = document.getElementById('find-replace-btn');
-const frFindInput     = document.getElementById('fr-find');
-const frReplaceInput  = document.getElementById('fr-replace');
-const frMatchCount    = document.getElementById('fr-match-count');
-const frPrevBtn       = document.getElementById('fr-prev');
-const frNextBtn       = document.getElementById('fr-next');
+const findReplaceBar = document.getElementById('find-replace-bar');
+const findReplaceBtn = document.getElementById('find-replace-btn');
+const frFindInput = document.getElementById('fr-find');
+const frReplaceInput = document.getElementById('fr-replace');
+const frMatchCount = document.getElementById('fr-match-count');
+const frPrevBtn = document.getElementById('fr-prev');
+const frNextBtn = document.getElementById('fr-next');
 const frReplaceOneBtn = document.getElementById('fr-replace-one');
 const frReplaceAllBtn = document.getElementById('fr-replace-all');
-const frCloseBtn      = document.getElementById('fr-close');
+const frCloseBtn = document.getElementById('fr-close');
 
-let frMatches     = [];   // Array of <mark> nodes currently highlighted
-let frCurrentIdx  = -1;   // Which match is focused
+let frMatches = [];   // Array of <mark> nodes currently highlighted
+let frCurrentIdx = -1;   // Which match is focused
 
 // ── Open / close ───────────────────────────────────────────────
 function openFindReplace() {
@@ -730,8 +732,8 @@ function updateMatchUI() {
         frMatchCount.textContent = `${frCurrentIdx + 1}/${n}`;
     }
     const hasMatches = n > 0;
-    frPrevBtn.disabled       = !hasMatches;
-    frNextBtn.disabled       = !hasMatches;
+    frPrevBtn.disabled = !hasMatches;
+    frNextBtn.disabled = !hasMatches;
     frReplaceOneBtn.disabled = !hasMatches;
     frReplaceAllBtn.disabled = !hasMatches;
 }
@@ -831,7 +833,7 @@ const AUTOSAVE_KEY = 'bokasafnari_autosave_session';
 
 function getCurrentSessionData() {
     if (state.selectedChapterIndex !== null && state.chapters[state.selectedChapterIndex]) {
-        serializeChapterContent(state.selectedChapterIndex);
+        serializeChapterContent(state.selectedChapterIndex, false);
     }
     return {
         version: 1,
